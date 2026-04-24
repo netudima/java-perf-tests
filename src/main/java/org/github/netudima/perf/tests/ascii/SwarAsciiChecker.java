@@ -1,0 +1,28 @@
+package org.github.netudima.perf.tests.ascii;
+
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
+
+public class SwarAsciiChecker implements AsciiChecker {
+
+    private static final long ASCII_MASK = 0x8080808080808080L;
+
+    // byte order doesn't matter here
+    private static final VarHandle VH_LE_LONG =
+            MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
+
+    @Override
+    public boolean isAscii(byte[] bytes) {
+        int i = 0;
+        for (; i + 7 < bytes.length; i += 8) {
+            if ((((long) VH_LE_LONG.get(bytes, i)) & ASCII_MASK) != 0)
+                return false;
+        }
+        for (; i < bytes.length; i++) {
+            if (bytes[i] < 0)
+                return false;
+        }
+        return true;
+    }
+}

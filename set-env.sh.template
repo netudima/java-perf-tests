@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Copy this file to set-env.sh and set paths for your machine.
+
+JDK_HOME_17=/path/to/jdk-17
+JDK_HOME_21=/path/to/jdk-21
+JDK_HOME_25=/path/to/jdk-25

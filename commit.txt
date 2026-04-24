@@ -1,0 +1,15 @@
+Add JMH benchmark project for ASCII byte-array checking
+
+- Maven project targeting Java 17, JMH 1.37, fat jar via maven-shade-plugin
+- AsciiChecker interface with two implementations:
+  - SimpleAsciiChecker: scalar byte-by-byte check (b < 0)
+  - SwarAsciiChecker: SWAR technique reading 8 bytes at a time via VarHandle,
+    testing all high bits with a single AND against 0x8080808080808080
+- AsciiCheckerBenchmark: parameterised over checkerName and 5 string types
+  (short/long ASCII, short/long non-ASCII, ASCII prefix non-ASCII)
+- run-benchmarks.sh: build + run script with support for:
+  - selecting JDK version (17, 21, 25, or all)
+  - filtering @Param values via repeatable -p name=value flag
+  - per-JDK result summary printed at the end
+- set-env.sh.template: committed template for local JDK path configuration;
+  set-env.sh itself is gitignored
