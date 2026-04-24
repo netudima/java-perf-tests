@@ -1,4 +1,4 @@
-package org.github.netudima.perf.tests.ascii;
+package org.github.netudima.perf.tests.utf8;
 
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
@@ -11,21 +11,21 @@ import java.util.concurrent.TimeUnit;
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 5, timeUnit = TimeUnit.SECONDS)
 @Fork(value = 3, jvmArgsAppend = {"-Xmx512M"
-        ,"-XX:CompileCommand=print,*::isAscii"
+        ,"-XX:CompileCommand=print,*::validate"
 })
 @Threads(1)
 @State(Scope.Benchmark)
-public class AsciiCheckerBenchmark {
+public class UTF8ValidatorBenchmark {
 
     @Param({"simple", "swar"})
-    public String checkerName;
+    public String validatorName;
 
     @Param({"short ASCII", "long ASCII", "short ASCII prefix non-ASCII", "short non-ASCII", "long non-ASCII"})
     public String stringType;
 
     private byte[] value;
 
-    private AsciiChecker checker;
+    private UTF8Validator validator;
 
     @Setup(Level.Trial)
     public void setup() {
@@ -48,15 +48,15 @@ public class AsciiCheckerBenchmark {
             default -> throw new IllegalArgumentException("Unknown stringType: " + stringType);
         };
 
-        checker = switch (checkerName) {
-            case "simple" -> new SimpleAsciiChecker();
-            case "swar"   -> new SwarAsciiChecker();
-            default -> throw new IllegalArgumentException("Unknown checker: " + checkerName);
+        validator = switch (validatorName) {
+            case "simple" -> new SimpleUTF8Validator();
+            case "swar"   -> new SwarUTF8Validator();
+            default -> throw new IllegalArgumentException("Unknown validator: " + validatorName);
         };
     }
 
     @Benchmark
-    public void isAscii(Blackhole bh) {
-        bh.consume(checker.isAscii(value));
+    public void validate(Blackhole bh) {
+        bh.consume(validator.validate(value));
     }
 }
