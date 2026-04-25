@@ -1,5 +1,7 @@
 package org.github.netudima.perf.tests.utf8;
 
+import org.openjdk.jmh.annotations.CompilerControl;
+
 // the logic is taken from org.apache.cassandra.serializers.UTF8Serializer
 // to test it in isolation
 abstract class BaseUTF8Validator implements UTF8Validator {
@@ -15,6 +17,7 @@ abstract class BaseUTF8Validator implements UTF8Validator {
         FOUR_80bf_3,
     }
 
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
     protected static boolean validateSlowPath(byte[] bytes, int offset) {
         int b;
         State state = State.START;

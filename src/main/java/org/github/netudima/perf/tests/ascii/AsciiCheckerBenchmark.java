@@ -10,15 +10,13 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 5, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 3, jvmArgsAppend = {"-Xmx512M"
-        ,"-XX:CompileCommand=print,*::isAscii"
-})
+@Fork(value = 3)
 @Threads(1)
 @State(Scope.Benchmark)
 public class AsciiCheckerBenchmark {
 
-    @Param({"simple", "swar"})
-    public String checkerName;
+    @Param({"simple", "simple-foreach", "swar"})
+    public String impl;
 
     @Param({"short ASCII", "long ASCII", "short ASCII prefix non-ASCII", "short non-ASCII", "long non-ASCII"})
     public String stringType;
@@ -33,7 +31,7 @@ public class AsciiCheckerBenchmark {
             case "short ASCII" -> "ASCII string".getBytes(StandardCharsets.UTF_8);
             case "long ASCII" -> ("ASCII is an acronym for American Standard Code for Information Interchange, " +
                                   "is a character encoding standard for representing a particular set of 95 " +
-                                  "(English language focused) printable and 33 control characters – a total of 128 code points. " +
+                                  "(English language focused) printable and 33 control characters - a total of 128 code points. " +
                                   "The set of available punctuation had significant impact on the syntax of computer languages " +
                                   "and text markup. ASCII hugely influenced the design of character sets used by modern computers; " +
                                   "for example, the first 128 code points of Unicode are the same as ASCII.").getBytes(StandardCharsets.UTF_8);
@@ -48,10 +46,11 @@ public class AsciiCheckerBenchmark {
             default -> throw new IllegalArgumentException("Unknown stringType: " + stringType);
         };
 
-        checker = switch (checkerName) {
-            case "simple" -> new SimpleAsciiChecker();
-            case "swar"   -> new SwarAsciiChecker();
-            default -> throw new IllegalArgumentException("Unknown checker: " + checkerName);
+        checker = switch (impl) {
+            case "simple"         -> new SimpleAsciiChecker();
+            case "simple-foreach" -> new SimpleForeachAsciiChecker();
+            case "swar"           -> new SwarAsciiChecker();
+            default -> throw new IllegalArgumentException("Unknown checker: " + impl);
         };
     }
 

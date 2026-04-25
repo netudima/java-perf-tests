@@ -1,5 +1,7 @@
 package org.github.netudima.perf.tests.ascii;
 
+import org.openjdk.jmh.annotations.CompilerControl;
+
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
@@ -13,6 +15,7 @@ public class SwarAsciiChecker implements AsciiChecker {
             MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
 
     @Override
+    @CompilerControl(CompilerControl.Mode.PRINT)
     public boolean isAscii(byte[] bytes) {
         int i = 0;
         for (; i + 7 < bytes.length; i += 8) {

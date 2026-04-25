@@ -2,13 +2,13 @@ package org.github.netudima.perf.tests.ascii;
 
 import org.openjdk.jmh.annotations.CompilerControl;
 
-public class SimpleAsciiChecker implements AsciiChecker {
+public class SimpleForeachAsciiChecker implements AsciiChecker {
 
     @Override
     @CompilerControl(CompilerControl.Mode.PRINT)
     public boolean isAscii(byte[] bytes) {
-        for (int i = 0; i < bytes.length; i++) {
-            if (bytes[i] < 0)
+        for (byte b : bytes) {
+            if (b < 0)
                 return false;
         }
         return true;

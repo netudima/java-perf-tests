@@ -6,7 +6,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 
-public class SwarUTF8Validator extends BaseUTF8Validator {
+public class SwarInvokeInLoopUTF8Validator extends BaseUTF8Validator {
 
     private static final long ASCII_MASK = 0x8080808080808080L;
 
@@ -19,20 +19,14 @@ public class SwarUTF8Validator extends BaseUTF8Validator {
     public boolean validate(byte[] bytes) {
         if (bytes == null)
             return false;
-        if(validateAscii(bytes))
-            return true;
-        return validateSlowPath(bytes, 0);
-    }
-
-    public boolean validateAscii(byte[] bytes) {
         int i = 0;
         for (; i + 7 < bytes.length; i += 8) {
             if ((((long) VH_LE_LONG.get(bytes, i)) & ASCII_MASK) != 0)
-                return false;
+                return validateSlowPath(bytes, i);
         }
         for (; i < bytes.length; i++) {
             if (bytes[i] < 0)
-                return false;
+                return validateSlowPath(bytes, i);
         }
         return true;
     }
