@@ -10,12 +10,12 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 5, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 3)
+@Fork(value = 2)
 @Threads(1)
 @State(Scope.Benchmark)
 public class UTF8ValidatorBenchmark {
 
-    @Param({"simple", "swar", "swarInvokeInLoop"})
+    @Param({"simple", "swar", "swarUnrolled"})
     public String impl;
 
     @Param({"short ASCII", "long ASCII", "short ASCII prefix non-ASCII", "short non-ASCII", "long non-ASCII"})
@@ -50,6 +50,7 @@ public class UTF8ValidatorBenchmark {
             case "simple"            -> new SimpleUTF8Validator();
             case "swar"              -> new SwarUTF8Validator();
             case "swarInvokeInLoop"  -> new SwarInvokeInLoopUTF8Validator();
+            case "swarUnrolled"      -> new SwarUnrolledUTF8Validator();
             default -> throw new IllegalArgumentException("Unknown validator: " + impl);
         };
     }

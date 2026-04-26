@@ -24,6 +24,7 @@ public class SwarUTF8Validator extends BaseUTF8Validator {
         return validateSlowPath(bytes, 0);
     }
 
+    @CompilerControl(CompilerControl.Mode.PRINT)
     public boolean validateAscii(byte[] bytes) {
         int i = 0;
         for (; i + 7 < bytes.length; i += 8) {
