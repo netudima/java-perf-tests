@@ -15,7 +15,8 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Benchmark)
 public class AsciiCheckerBenchmark {
 
-    @Param({"simple", "simple-foreach", "swar"})
+    // "simple-foreach" excluded, has the same perf as simple
+    @Param({"simple", "swar", "swar-unrolled", "swar-or-reduction", "vector", "vector-or-reduction"})
     public String impl;
 
     @Param({"short ASCII", "long ASCII", "short ASCII prefix non-ASCII", "short non-ASCII", "long non-ASCII"})
@@ -47,9 +48,13 @@ public class AsciiCheckerBenchmark {
         };
 
         checker = switch (impl) {
-            case "simple"         -> new SimpleAsciiChecker();
-            case "simple-foreach" -> new SimpleForeachAsciiChecker();
-            case "swar"           -> new SwarAsciiChecker();
+            case "simple"              -> new SimpleAsciiChecker();
+            case "simple-foreach"      -> new SimpleForeachAsciiChecker();
+            case "swar"                -> new SwarAsciiChecker();
+            case "swar-unrolled"       -> new SwarUnrolledAsciiChecker();
+            case "swar-or-reduction"   -> new SwarOrReductionAsciiChecker();
+            case "vector"              -> new VectorAsciiChecker();
+            case "vector-or-reduction" -> new VectorOrReductionAsciiChecker();
             default -> throw new IllegalArgumentException("Unknown checker: " + impl);
         };
     }

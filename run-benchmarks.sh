@@ -11,7 +11,7 @@ else
     exit 1
 fi
 
-BUILD_JAVA_HOME="$JDK_HOME_17"
+BUILD_JAVA_HOME="$JDK_HOME_21"
 
 JAR="$SCRIPT_DIR/target/benchmarks.jar"
 
@@ -100,7 +100,7 @@ export JAVA_HOME
 export PATH="$JAVA_HOME/bin:$PATH"
 
 if [ ! -f "$JAR" ]; then
-    echo "Building benchmarks with JDK 17..."
+    echo "Building benchmarks with JDK 21..."
     mvn -f "$SCRIPT_DIR/pom.xml" clean package -q
 fi
 
@@ -108,6 +108,36 @@ BENCHMARK_NAME="${1:-all}"
 LOG_FILE="$SCRIPT_DIR/logs/${BENCHMARK_NAME}-$(date '+%Y%m%d-%H%M%S').log"
 mkdir -p "$SCRIPT_DIR/logs"
 echo "run-benchmarks.sh $ORIGINAL_ARGS" | tee "$LOG_FILE"
+
+CPU_MODEL="$(sysctl -n machdep.cpu.brand_string 2>/dev/null || grep -m1 'model name' /proc/cpuinfo 2>/dev/null | cut -d: -f2 | xargs || echo 'unknown')"
+CPU_CORES="$(sysctl -n hw.logicalcpu 2>/dev/null || nproc 2>/dev/null || echo 'unknown')"
+
+fmt_bytes() {
+    val="$1"
+    if [ "$val" -ge 1048576 ] 2>/dev/null; then
+        printf '%dMB' $((val / 1048576))
+    elif [ "$val" -ge 1024 ] 2>/dev/null; then
+        printf '%dKB' $((val / 1024))
+    else
+        printf '%dB' "$val"
+    fi
+}
+
+L1I="$(sysctl -n hw.l1icachesize 2>/dev/null || grep -m1 'cache size' /proc/cpuinfo 2>/dev/null | cut -d: -f2 | xargs || echo '')"
+L1D="$(sysctl -n hw.l1dcachesize 2>/dev/null || echo '')"
+L2="$(sysctl -n hw.l2cachesize 2>/dev/null || echo '')"
+L3="$(sysctl -n hw.l3cachesize 2>/dev/null || echo '')"
+CACHE_LINE="$(sysctl -n hw.cachelinesize 2>/dev/null || getconf LEVEL1_DCACHE_LINESIZE 2>/dev/null || echo '')"
+
+CACHE_INFO=""
+[ -n "$L1I" ] && CACHE_INFO="${CACHE_INFO} L1i=$(fmt_bytes "$L1I")"
+[ -n "$L1D" ] && CACHE_INFO="${CACHE_INFO} L1d=$(fmt_bytes "$L1D")"
+[ -n "$L2"  ] && CACHE_INFO="${CACHE_INFO} L2=$(fmt_bytes "$L2")"
+[ -n "$L3"  ] && CACHE_INFO="${CACHE_INFO} L3=$(fmt_bytes "$L3")"
+[ -n "$CACHE_LINE" ] && CACHE_INFO="${CACHE_INFO} line=${CACHE_LINE}B"
+
+echo "CPU: ${CPU_MODEL} (${CPU_CORES} logical cores)" | tee -a "$LOG_FILE"
+echo "Cache:${CACHE_INFO}" | tee -a "$LOG_FILE"
 
 START_TIME=$(date +%s)
 SUMMARIES=""
@@ -137,11 +167,15 @@ $EXTRA_ARGS
 EOF
     fi
 
+    # jdk.incubator.vector is an incubator module on JDK 17/21; pass it to forked JVMs.
+    # On JDK 25 it is already part of the default module graph, the flag is still accepted.
+    VECTOR_ARG="-jvmArgsAppend --add-modules=jdk.incubator.vector"
+
     tmpfile="$(mktemp)"
     if [ -n "$PROFILER" ]; then
-        "$java_bin" -jar "$JAR" -prof "$PROFILER" "$@" | tee -a "$LOG_FILE" | tee "$tmpfile"
+        "$java_bin" -jar "$JAR" -prof "$PROFILER" $VECTOR_ARG "$@" | tee -a "$LOG_FILE" | tee "$tmpfile"
     else
-        "$java_bin" -jar "$JAR" "$@" | tee -a "$LOG_FILE" | tee "$tmpfile"
+        "$java_bin" -jar "$JAR" $VECTOR_ARG "$@" | tee -a "$LOG_FILE" | tee "$tmpfile"
     fi
     summary="$(grep -E '^(Benchmark|[A-Za-z].+avgt)' "$tmpfile")"
     rm -f "$tmpfile"
